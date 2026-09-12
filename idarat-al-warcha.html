@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>إدارة الورشة</title>
+<style>
+  :root{
+    --paper:#EEE7D6;
+    --paper-dark:#E2D9C1;
+    --ink:#2E2B24;
+    --ink-soft:#5B564A;
+    --line:#C9BE9F;
+    --teal:#33635B;
+    --teal-dark:#234942;
+    --amber:#B5762A;
+    --red:#A8402E;
+    --card:#FBF9F3;
+    --shadow: 2px 2px 0 rgba(46,43,36,0.08);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      repeating-linear-gradient(0deg, transparent, transparent 27px, rgba(46,43,36,0.035) 28px),
+      var(--paper);
+    color:var(--ink);
+    font-family: 'Tahoma','Segoe UI',sans-serif;
+    min-height:100vh;
+    padding-bottom:60px;
+  }
+  header.top{
+    background:var(--teal);
+    color:#F6F1E3;
+    padding:18px 20px 14px;
+    box-shadow:var(--shadow);
+    position:sticky; top:0; z-index:10;
+  }
+  header.top .row{
+    display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
+  }
+  header.top h1{
+    margin:0; font-size:22px; font-weight:800; letter-spacing:0.5px;
+  }
+  header.top input#facilityName{
+    background:transparent; border:none; border-bottom:2px dashed rgba(246,241,227,0.5);
+    color:#F6F1E3; font-size:22px; font-weight:800; font-family:inherit;
+    padding:0 4px; max-width:260px;
+  }
+  header.top input#facilityName:focus{outline:none; border-bottom-color:#F6F1E3;}
+  .datebadge{
+    background:rgba(246,241,227,0.14); border-radius:8px; padding:6px 12px; font-size:13px;
+  }
+  nav.tabs{
+    display:flex; gap:6px; padding:10px 20px 0; overflow-x:auto; background:var(--teal);
+  }
+  nav.tabs button{
+    background:rgba(246,241,227,0.12); color:#F6F1E3; border:none; border-radius:10px 10px 0 0;
+    padding:10px 16px; font-size:14px; font-weight:700; cursor:pointer; white-space:nowrap;
+    font-family:inherit;
+  }
+  nav.tabs button.active{
+    background:var(--paper); color:var(--teal-dark);
+  }
+  main{ max-width:980px; margin:0 auto; padding:22px 16px 40px; }
+  .panel{ display:none; }
+  .panel.active{ display:block; }
+  .card{
+    background:var(--card); border:1px solid var(--line); border-radius:10px;
+    box-shadow:var(--shadow); padding:16px 18px; margin-bottom:18px;
+  }
+  .card h2{ margin:0 0 12px; font-size:17px; color:var(--teal-dark); border-bottom:2px solid var(--line); padding-bottom:8px;}
+  .controlsRow{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:14px;}
+  input[type=date], input[type=time], input[type=number], input[type=text], select{
+    font-family:inherit; border:1px solid var(--line); background:#fff; border-radius:6px;
+    padding:7px 9px; font-size:14px; color:var(--ink);
+  }
+  button.btn{
+    font-family:inherit; border:none; border-radius:7px; padding:8px 14px; font-size:13px;
+    font-weight:700; cursor:pointer; color:#fff; background:var(--teal);
+  }
+  button.btn:hover{ background:var(--teal-dark); }
+  button.btn.secondary{ background:transparent; color:var(--teal-dark); border:1px solid var(--teal); }
+  button.btn.danger{ background:transparent; color:var(--red); border:1px solid var(--red); }
+  button.btn.amber{ background:var(--amber); }
+  .empGrid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:14px;}
+  .empCard{
+    background:#fff; border:1px solid var(--line); border-radius:8px; padding:12px 14px;
+  }
+  .empCard h3{ margin:0 0 8px; font-size:15px; display:flex; justify-content:space-between; align-items:center;}
+  .taskLine{ display:flex; align-items:center; gap:6px; margin-bottom:6px;}
+  .taskLine input[type=text]{ flex:1; font-size:13px; padding:5px 7px;}
+  .taskLine input[type=checkbox]{ width:16px; height:16px; accent-color:var(--teal);}
+  .taskLine .del{ cursor:pointer; color:var(--red); font-weight:900; padding:0 4px; background:none; border:none; font-size:15px;}
+  .addTaskBtn{ font-size:12px; margin-top:4px; }
+  table.sched{ width:100%; border-collapse:collapse; font-size:13px;}
+  table.sched th, table.sched td{ border:1px solid var(--line); padding:6px 4px; text-align:center;}
+  table.sched th{ background:var(--paper-dark); color:var(--teal-dark); font-size:12px;}
+  table.sched td.nameCell{ text-align:right; font-weight:700; background:#fff; padding-inline:8px; white-space:nowrap;}
+  table.sched input[type=number]{ width:52px; text-align:center; padding:4px;}
+  td.total{ font-weight:800; }
+  td.total.ok{ color:var(--teal-dark); background:#E4EFEA;}
+  td.total.bad{ color:var(--amber); background:#F8ECD9;}
+  .empRow{ display:flex; gap:8px; align-items:center; margin-bottom:8px;}
+  .empRow input[type=text]{ flex:1; }
+  .timeline{ position:relative; height:46px; background:#fff; border:1px solid var(--line); border-radius:6px; margin:10px 0 4px; overflow:hidden;}
+  .segment{ position:absolute; top:0; bottom:0; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; color:#fff; border-inline-start:1px solid rgba(255,255,255,0.4);}
+  .segment.gap{ background:repeating-linear-gradient(45deg, var(--red), var(--red) 6px, #c65b48 6px, #c65b48 12px); color:#fff;}
+  .timelineLabels{ display:flex; justify-content:space-between; font-size:11px; color:var(--ink-soft); margin-bottom:14px;}
+  .shiftRow{ display:flex; gap:8px; align-items:center; margin-bottom:8px; flex-wrap:wrap; background:#fff; border:1px solid var(--line); border-radius:6px; padding:8px;}
+  .shiftRow select, .shiftRow input{ font-size:13px; }
+  .badge{ display:inline-block; padding:2px 8px; border-radius:12px; font-size:11px; font-weight:700;}
+  .badge.covered{ background:#E4EFEA; color:var(--teal-dark);}
+  .badge.gap{ background:#F6DCD5; color:var(--red);}
+  .muted{ color:var(--ink-soft); font-size:13px;}
+  .printSheet{ display:none; }
+  @media print{
+    body *{ visibility:hidden; }
+    header.top, nav.tabs{ display:none !important; }
+    .printSheet, .printSheet *{ visibility:visible; }
+    .printSheet{ display:block; position:absolute; top:0; right:0; left:0; }
+    .printPage{ page-break-after:always; padding:20px; }
+  }
+  .printSheet .pTitle{ font-size:20px; font-weight:800; border-bottom:3px solid var(--ink); padding-bottom:6px; margin-bottom:10px;}
+  .printSheet .pTask{ display:flex; gap:8px; align-items:center; padding:6px 0; border-bottom:1px dashed var(--line); font-size:15px;}
+  .printSheet .box{ width:16px; height:16px; border:2px solid var(--ink); flex:none; }
+  .empty{ text-align:center; color:var(--ink-soft); padding:24px 0; font-size:14px;}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="row">
+    <div>
+      <input id="facilityName" value="مؤسستي" />
+    </div>
+    <div class="datebadge" id="todayBadge"></div>
+  </div>
+  <nav class="tabs">
+    <button data-tab="tasks" class="active">مهام اليوم</button>
+    <button data-tab="week">البرنامج الأسبوعي</button>
+    <button data-tab="guard">الحراسة</button>
+    <button data-tab="staff">العمال</button>
+  </nav>
+</header>
+
+<main>
+
+  <!-- TASKS -->
+  <section class="panel active" id="panel-tasks">
+    <div class="card">
+      <h2>مهام اليوم لكل عامل</h2>
+      <div class="controlsRow">
+        <label class="muted">التاريخ:</label>
+        <input type="date" id="taskDate">
+        <button class="btn secondary" id="printTasksBtn">🖨️ طباعة</button>
+      </div>
+      <div class="empGrid" id="taskGrid"></div>
+    </div>
+  </section>
+
+  <!-- WEEK -->
+  <section class="panel" id="panel-week">
+    <div class="card">
+      <h2>البرنامج الأسبوعي (توزيع الساعات)</h2>
+      <div class="controlsRow">
+        <label class="muted">بداية الأسبوع:</label>
+        <input type="date" id="weekStart">
+        <span class="muted">هدف كل عامل: 40 سا/أسبوع</span>
+        <button class="btn secondary" id="printWeekBtn">🖨️ طباعة</button>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="sched" id="weekTable"></table>
+      </div>
+    </div>
+  </section>
+
+  <!-- GUARD -->
+  <section class="panel" id="panel-guard">
+    <div class="card">
+      <h2>إعدادات التغطية</h2>
+      <div class="controlsRow">
+        <label class="muted">فتح المؤسسة:</label>
+        <input type="time" id="openTime" value="07:00">
+        <label class="muted">غلق المؤسسة:</label>
+        <input type="time" id="closeTime" value="19:00">
+        <span class="muted" id="guardStatus"></span>
+      </div>
+    </div>
+    <div class="card">
+      <h2>حراسة يوم معيّن</h2>
+      <div class="controlsRow">
+        <label class="muted">التاريخ:</label>
+        <input type="date" id="guardDate">
+      </div>
+      <div class="timeline" id="guardTimeline"></div>
+      <div class="timelineLabels" id="guardLabels"></div>
+      <div id="shiftList"></div>
+      <button class="btn" id="addShiftBtn">+ إضافة نوبة حراسة</button>
+    </div>
+  </section>
+
+  <!-- STAFF -->
+  <section class="panel" id="panel-staff">
+    <div class="card">
+      <h2>قائمة العمال</h2>
+      <div id="staffList"></div>
+      <button class="btn" id="addStaffBtn">+ إضافة عامل</button>
+    </div>
+  </section>
+
+</main>
+
+<div class="printSheet" id="printArea"></div>
+
+<script>
+const DAYS = ["السبت","الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة"];
+const DAY_KEYS = ["sat","sun","mon","tue","wed","thu","fri"];
+
+let state = {
+  employees: [],          // [{id,name}]
+  dailyTasks: {},         // { 'YYYY-MM-DD': { empId: [{text,done}] } }
+  weeklySchedule: {},     // { 'weekStartDate': { empId: {sat:0,...} } }
+  guardSettings: { open:"07:00", close:"19:00" },
+  guardShifts: {}         // { 'YYYY-MM-DD': [{id,start,end,empId}] }
+};
+
+function uid(){ return 'x'+Math.random().toString(36).slice(2,9); }
+function todayStr(){ const d=new Date(); return d.toISOString().slice(0,10); }
+function fmtDateAr(dstr){
+  const d = new Date(dstr+'T00:00:00');
+  return d.toLocaleDateString('ar-DZ',{weekday:'long', year:'numeric', month:'long', day:'numeric'});
+}
+
+// ---------- STORAGE ----------
+async function loadAll(){
+  try{
+    const keys = ['employees','dailyTasks','weeklySchedule','guardSettings','guardShifts','facilityName'];
+    for(const k of keys){
+      try{
+        const r = await window.storage.get(k, false);
+        if(r && r.value !== undefined){
+          if(k==='facilityName'){ document.getElementById('facilityName').value = r.value; }
+          else { state[k] = JSON.parse(r.value); }
+        }
+      }catch(e){ /* key doesn't exist yet, ignore */ }
+    }
+  }catch(e){ console.error('load error', e); }
+}
+
+async function save(key){
+  try{
+    const val = key==='facilityName' ? document.getElementById('facilityName').value : JSON.stringify(state[key]);
+    await window.storage.set(key, val, false);
+  }catch(e){ console.error('save error', key, e); }
+}
+
+// ---------- INIT ----------
+async function init(){
+  document.getElementById('todayBadge').textContent = fmtDateAr(todayStr());
+  document.getElementById('taskDate').value = todayStr();
+  document.getElementById('weekStart').value = mondayOfWeek(todayStr());
+  document.getElementById('guardDate').value = todayStr();
+
+  await loadAll();
+  if(state.guardSettings){
+    document.getElementById('openTime').value = state.guardSettings.open || "07:00";
+    document.getElementById('closeTime').value = state.guardSettings.close || "19:00";
+  }
+
+  if(state.employees.length===0){
+    // seed a couple of empty rows so it's not a blank wall
+    state.employees = [];
+  }
+
+  renderStaff();
+  renderTasks();
+  renderWeek();
+  renderGuard();
+
+  document.getElementById('facilityName').addEventListener('change', ()=>save('facilityName'));
+}
+
+function mondayOfWeek(dstr){
+  // returns the Saturday on/before given date (week starts Saturday)
+  const d = new Date(dstr+'T00:00:00');
+  const day = d.getDay(); // 0=Sun..6=Sat
+  const diff = (day + 1) % 7; // days since Saturday
+  d.setDate(d.getDate()-diff);
+  return d.toISOString().slice(0,10);
+}
+
+// ---------- TABS ----------
+document.querySelectorAll('nav.tabs button').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('panel-'+btn.dataset.tab).classList.add('active');
+  });
+});
+
+// ---------- STAFF ----------
+function renderStaff(){
+  const box = document.getElementById('staffList');
+  box.innerHTML='';
+  if(state.employees.length===0){
+    box.innerHTML = '<div class="empty">ما كاينش عمال بعد. زيد عامل باش تبدا.</div>';
+  }
+  state.employees.forEach(emp=>{
+    const row = document.createElement('div');
+    row.className='empRow';
+    row.innerHTML = `
+      <input type="text" value="${escapeHtml(emp.name)}" data-id="${emp.id}" class="empNameInput">
+      <button class="btn danger" data-id="${emp.id}">حذف</button>
+    `;
+    row.querySelector('.empNameInput').addEventListener('change', e=>{
+      emp.name = e.target.value;
+      save('employees');
+      renderTasks(); renderWeek(); renderGuard();
+    });
+    row.querySelector('button.danger').addEventListener('click', ()=>{
+      state.employees = state.employees.filter(x=>x.id!==emp.id);
+      save('employees');
+      renderStaff(); renderTasks(); renderWeek(); renderGuard();
+    });
+    box.appendChild(row);
+  });
+}
+document.getElementById('addStaffBtn').addEventListener('click', ()=>{
+  state.employees.push({id:uid(), name:'عامل جديد'});
+  save('employees');
+  renderStaff(); renderTasks(); renderWeek(); renderGuard();
+});
+
+function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+
+// ---------- DAILY TASKS ----------
+document.getElementById('taskDate').addEventListener('change', renderTasks);
+function renderTasks(){
+  const date = document.getElementById('taskDate').value;
+  const grid = document.getElementById('taskGrid');
+  grid.innerHTML='';
+  if(state.employees.length===0){
+    grid.innerHTML = '<div class="empty">زيد عمال أولا من قسم "العمال".</div>';
+    return;
+  }
+  if(!state.dailyTasks[date]) state.dailyTasks[date]={};
+
+  state.employees.forEach(emp=>{
+    if(!state.dailyTasks[date][emp.id]) state.dailyTasks[date][emp.id]=[];
+    const tasks = state.dailyTasks[date][emp.id];
+
+    const card = document.createElement('div');
+    card.className='empCard';
+    card.innerHTML = `<h3>${escapeHtml(emp.name)}</h3><div class="tasksBox"></div>
+      <button class="btn secondary addTaskBtn">+ مهمة</button>`;
+    const tbox = card.querySelector('.tasksBox');
+
+    tasks.forEach((t,idx)=>{
+      const line = document.createElement('div');
+      line.className='taskLine';
+      line.innerHTML = `
+        <input type="checkbox" ${t.done?'checked':''}>
+        <input type="text" value="${escapeHtml(t.text)}" placeholder="اكتب المهمة">
+        <button class="del">×</button>
+      `;
+      line.querySelector('input[type=checkbox]').addEventListener('change', e=>{
+        t.done = e.target.checked; save('dailyTasks');
+      });
+      line.querySelector('input[type=text]').addEventListener('change', e=>{
+        t.text = e.target.value; save('dailyTasks');
+      });
+      line.querySelector('.del').addEventListener('click', ()=>{
+        tasks.splice(idx,1); save('dailyTasks'); renderTasks();
+      });
+      tbox.appendChild(line);
+    });
+
+    card.querySelector('.addTaskBtn').addEventListener('click', ()=>{
+      tasks.push({text:'', done:false});
+      save('dailyTasks'); renderTasks();
+    });
+
+    grid.appendChild(card);
+  });
+}
+
+document.getElementById('printTasksBtn').addEventListener('click', ()=>{
+  const date = document.getElementById('taskDate').value;
+  const facility = document.getElementById('facilityName').value;
+  const area = document.getElementById('printArea');
+  area.innerHTML='';
+  state.employees.forEach(emp=>{
+    const tasks = (state.dailyTasks[date] && state.dailyTasks[date][emp.id]) || [];
+    const page = document.createElement('div');
+    page.className='printPage';
+    page.innerHTML = `
+      <div class="pTitle">${escapeHtml(facility)} — مهام اليوم</div>
+      <div style="margin-bottom:10px;font-size:15px;"><b>العامل:</b> ${escapeHtml(emp.name)} &nbsp;|&nbsp; <b>التاريخ:</b> ${fmtDateAr(date)}</div>
+      ${ tasks.length? tasks.map(t=>`<div class="pTask"><span class="box"></span><span>${escapeHtml(t.text)||'—'}</span></div>`).join('') : '<div class="muted">لا توجد مهام مسجلة</div>' }
+    `;
+    area.appendChild(page);
+  });
+  window.print();
+});
+
+// ---------- WEEKLY SCHEDULE ----------
+document.getElementById('weekStart').addEventListener('change', renderWeek);
+function renderWeek(){
+  const ws = document.getElementById('weekStart').value;
+  if(!state.weeklySchedule[ws]) state.weeklySchedule[ws]={};
+  const table = document.getElementById('weekTable');
+  table.innerHTML='';
+
+  let thead = '<tr><th>العامل</th>';
+  DAYS.forEach(d=> thead += `<th>${d}</th>`);
+  thead += '<th>المجموع</th></tr>';
+  table.innerHTML = thead;
+
+  if(state.employees.length===0){
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td colspan="${DAYS.length+2}" class="empty">زيد عمال أولا من قسم "العمال".</td>`;
+    table.appendChild(tr);
+    return;
+  }
+
+  state.employees.forEach(emp=>{
+    if(!state.weeklySchedule[ws][emp.id]){
+      state.weeklySchedule[ws][emp.id] = Object.fromEntries(DAY_KEYS.map(k=>[k,0]));
+    }
+    const rowData = state.weeklySchedule[ws][emp.id];
+    const tr = document.createElement('tr');
+    let total = DAY_KEYS.reduce((s,k)=>s+(Number(rowData[k])||0),0);
+    let html = `<td class="nameCell">${escapeHtml(emp.name)}</td>`;
+    DAY_KEYS.forEach(k=>{
+      html += `<td><input type="number" min="0" max="24" step="0.5" value="${rowData[k]}" data-emp="${emp.id}" data-day="${k}"></td>`;
+    });
+    html += `<td class="total ${total===40?'ok':'bad'}" data-total="${emp.id}">${total}</td>`;
+    tr.innerHTML = html;
+    table.appendChild(tr);
+  });
+
+  table.querySelectorAll('input[type=number]').forEach(inp=>{
+    inp.addEventListener('change', e=>{
+      const empId = e.target.dataset.emp, day = e.target.dataset.day;
+      state.weeklySchedule[ws][empId][day] = Number(e.target.value)||0;
+      save('weeklySchedule');
+      renderWeek();
+    });
+  });
+}
+
+document.getElementById('printWeekBtn').addEventListener('click', ()=>{
+  const ws = document.getElementById('weekStart').value;
+  const facility = document.getElementById('facilityName').value;
+  const area = document.getElementById('printArea');
+  let rows = '';
+  state.employees.forEach(emp=>{
+    const rd = (state.weeklySchedule[ws] && state.weeklySchedule[ws][emp.id]) || Object.fromEntries(DAY_KEYS.map(k=>[k,0]));
+    const total = DAY_KEYS.reduce((s,k)=>s+(Number(rd[k])||0),0);
+    rows += `<tr><td style="padding:6px;border:1px solid #333;font-weight:700;">${escapeHtml(emp.name)}</td>` +
+      DAY_KEYS.map(k=>`<td style="padding:6px;border:1px solid #333;text-align:center;">${rd[k]}</td>`).join('') +
+      `<td style="padding:6px;border:1px solid #333;text-align:center;font-weight:700;">${total}</td></tr>`;
+  });
+  area.innerHTML = `<div class="printPage">
+    <div class="pTitle">${escapeHtml(facility)} — البرنامج الأسبوعي</div>
+    <div style="margin-bottom:10px;">ابتداءً من: ${fmtDateAr(ws)}</div>
+    <table style="width:100%;border-collapse:collapse;font-size:13px;">
+      <tr>${['العامل',...DAYS,'المجموع'].map(h=>`<th style="padding:6px;border:1px solid #333;background:#eee;">${h}</th>`).join('')}</tr>
+      ${rows}
+    </table>
+  </div>`;
+  window.print();
+});
+
+// ---------- GUARD ----------
+document.getElementById('openTime').addEventListener('change', e=>{
+  state.guardSettings.open = e.target.value; save('guardSettings'); renderGuard();
+});
+document.getElementById('closeTime').addEventListener('change', e=>{
+  state.guardSettings.close = e.target.value; save('guardSettings'); renderGuard();
+});
+document.getElementById('guardDate').addEventListener('change', renderGuard);
+document.getElementById('addShiftBtn').addEventListener('click', ()=>{
+  const date = document.getElementById('guardDate').value;
+  if(!state.guardShifts[date]) state.guardShifts[date]=[];
+  state.guardShifts[date].push({id:uid(), start:state.guardSettings.open, end:state.guardSettings.close, empId: state.employees[0]?state.employees[0].id:''});
+  save('guardShifts');
+  renderGuard();
+});
+
+function timeToMin(t){ const [h,m]=t.split(':').map(Number); return h*60+m; }
+
+function renderGuard(){
+  const date = document.getElementById('guardDate').value;
+  const open = state.guardSettings.open, close = state.guardSettings.close;
+  const openM = timeToMin(open), closeM = timeToMin(close);
+  const span = Math.max(closeM-openM, 1);
+
+  if(!state.guardShifts[date]) state.guardShifts[date]=[];
+  const shifts = state.guardShifts[date];
+
+  // Timeline rendering
+  const tl = document.getElementById('guardTimeline');
+  tl.innerHTML='';
+  // build coverage array
+  let covered = new Array(span).fill(null); // employee name per minute-slot (relative)
+  shifts.forEach(s=>{
+    const emp = state.employees.find(e=>e.id===s.empId);
+    let sM = Math.max(timeToMin(s.start)-openM,0);
+    let eM = Math.min(timeToMin(s.end)-openM, span);
+    for(let i=sM;i<eM;i++) covered[i] = emp ? emp.name : '؟';
+  });
+  // find contiguous segments (gap or covered)
+  let segs = [];
+  let i=0;
+  while(i<span){
+    let val = covered[i];
+    let j=i;
+    while(j<span && covered[j]===val) j++;
+    segs.push({start:i,end:j,name:val});
+    i=j;
+  }
+  let anyGap=false;
+  segs.forEach(seg=>{
+    const div = document.createElement('div');
+    const widthPct = (seg.end-seg.start)/span*100;
+    const leftPct = seg.start/span*100;
+    div.className='segment'+(seg.name?'':' gap');
+    div.style.width = widthPct+'%';
+    div.style.right = leftPct+'%'; // rtl positioning
+    div.style.background = seg.name ? pickColor(seg.name) : '';
+    div.textContent = seg.name || 'غير مغطى';
+    tl.appendChild(div);
+    if(!seg.name) anyGap=true;
+  });
+
+  document.getElementById('guardLabels').innerHTML = `<span>${open}</span><span>${close}</span>`;
+  document.getElementById('guardStatus').innerHTML = anyGap
+    ? '<span class="badge gap">⚠ توجد فترات بلا حراسة</span>'
+    : '<span class="badge covered">✓ التغطية كاملة</span>';
+
+  // shift list
+  const list = document.getElementById('shiftList');
+  list.innerHTML='';
+  if(state.employees.length===0){
+    list.innerHTML = '<div class="empty">زيد عمال أولا من قسم "العمال".</div>';
+    return;
+  }
+  shifts.forEach((s,idx)=>{
+    const row = document.createElement('div');
+    row.className='shiftRow';
+    row.innerHTML = `
+      <label class="muted">من</label>
+      <input type="time" value="${s.start}" data-idx="${idx}" data-f="start">
+      <label class="muted">إلى</label>
+      <input type="time" value="${s.end}" data-idx="${idx}" data-f="end">
+      <label class="muted">العامل:</label>
+      <select data-idx="${idx}" data-f="empId">
+        ${state.employees.map(e=>`<option value="${e.id}" ${e.id===s.empId?'selected':''}>${escapeHtml(e.name)}</option>`).join('')}
+      </select>
+      <button class="btn danger" data-idx="${idx}">حذف</button>
+    `;
+    row.querySelectorAll('input,select').forEach(el=>{
+      el.addEventListener('change', e=>{
+        const f = e.target.dataset.f;
+        shifts[idx][f] = e.target.value;
+        save('guardShifts'); renderGuard();
+      });
+    });
+    row.querySelector('button.danger').addEventListener('click', ()=>{
+      shifts.splice(idx,1); save('guardShifts'); renderGuard();
+    });
+    list.appendChild(row);
+  });
+}
+
+function pickColor(name){
+  const palette = ['#33635B','#B5762A','#5B7A9D','#7A5B9D','#8A8F3A','#3A8F82','#9D6B5B'];
+  let h=0; for(const c of name) h+=c.charCodeAt(0);
+  return palette[h%palette.length];
+}
+
+init();
+</script>
+</body>
+</html>
