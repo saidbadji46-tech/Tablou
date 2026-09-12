@@ -232,26 +232,26 @@ function fmtDateAr(dstr){
   return d.toLocaleDateString('ar-DZ',{weekday:'long', year:'numeric', month:'long', day:'numeric'});
 }
 
-// ---------- STORAGE ----------
+// ---------- STORAGE (plain localStorage — works on any standalone site, incl. GitHub Pages) ----------
 async function loadAll(){
   try{
     const keys = ['employees','dailyTasks','weeklySchedule','guardSettings','guardShifts','facilityName'];
     for(const k of keys){
       try{
-        const r = await window.storage.get(k, false);
-        if(r && r.value !== undefined){
-          if(k==='facilityName'){ document.getElementById('facilityName').value = r.value; }
-          else { state[k] = JSON.parse(r.value); }
+        const v = localStorage.getItem(k);
+        if(v !== null){
+          if(k==='facilityName'){ document.getElementById('facilityName').value = v; }
+          else { state[k] = JSON.parse(v); }
         }
-      }catch(e){ /* key doesn't exist yet, ignore */ }
+      }catch(e){ /* key doesn't exist yet or bad JSON, ignore */ }
     }
   }catch(e){ console.error('load error', e); }
 }
 
-async function save(key){
+function save(key){
   try{
     const val = key==='facilityName' ? document.getElementById('facilityName').value : JSON.stringify(state[key]);
-    await window.storage.set(key, val, false);
+    localStorage.setItem(key, val);
   }catch(e){ console.error('save error', key, e); }
 }
 
